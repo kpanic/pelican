@@ -13,6 +13,15 @@ try:
     from markdown import Markdown
 except ImportError:
     Markdown = False
+
+try:
+    import sys
+    import StringIO
+    sys.path.append('/usr/share/asciidoc')
+    from asciidocapi import AsciiDocAPI
+except:
+    AsciiDocAPI = False
+
 import re
 
 from pelican.utils import get_date, open
@@ -77,7 +86,8 @@ class RstReader(Reader):
 
     def _get_publisher(self, filename):
         extra_params = {'initial_header_level': '2'}
-        pub = docutils.core.Publisher(destination_class=docutils.io.StringOutput)
+        pub = docutils.core.Publisher(
+                destination_class=docutils.io.StringOutput)
         pub.set_components('standalone', 'restructuredtext', 'html')
         pub.process_programmatic_settings(None, extra_params, None)
         pub.set_source(source_path=filename)
@@ -130,7 +140,36 @@ class HtmlReader(Reader):
 
         return content, metadata
 
+class AsciidocReader(Reader):
+    """ Reader class to parse asciidoc files """
+    enabled = bool(AsciiDocAPI)
+    extension = 'asciidoc'
+    _re = re.compile('^:(.*?):(.*)')
 
+    def read(self, filename):
+        """ Parse content of an asciidoc file """
+        outfile = StringIO.StringIO()
+        infile = StringIO.StringIO(open(filename).encode('utf8'))
+
+        metadata = {'title': 'unamed'}
+
+        content = ''
+        for line in infile.readlines():
+            cur_meta = filter(lambda x: x, self._re.findall(line.strip()))
+            if cur_meta:
+                (name, value) = cur_meta.pop()
+                metadata[name] = _process_metadata(name.strip(), value.strip())
+            else:
+                content += line
+
+        infile = StringIO.StringIO(content)
+
+        asciidoc = AsciiDocAPI()
+        asciidoc.options('--no-header-footer')
+        asciidoc.execute(infile=infile, outfile=outfile)
+
+
+        return outfile.getvalue(), metadata
 
 _EXTENSIONS = dict((cls.extension, cls) for cls in Reader.__subclasses__())
 
