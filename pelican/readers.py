@@ -33,6 +33,7 @@ _METADATA_PROCESSORS = {
     'status': unicode.strip,
 }
 
+
 def _process_metadata(name, value):
     if name.lower() in _METADATA_PROCESSORS:
         return _METADATA_PROCESSORS[name.lower()](value)
@@ -42,6 +43,7 @@ def _process_metadata(name, value):
 class Reader(object):
     enabled = True
     extensions = None
+
 
 class _FieldBodyTranslator(HTMLTranslator):
 
@@ -60,16 +62,17 @@ def render_node_to_html(document, node):
     node.walkabout(visitor)
     return visitor.astext()
 
+
 def get_metadata(document):
     """Return the dict containing document metadata"""
     output = {}
     for docinfo in document.traverse(docutils.nodes.docinfo):
         for element in docinfo.children:
-            if element.tagname == 'field': # custom fields (e.g. summary)
+            if element.tagname == 'field':  # custom fields (e.g. summary)
                 name_elem, body_elem = element.children
                 name = name_elem.astext()
                 value = render_node_to_html(document, body_elem)
-            else: # standard fields (e.g. address)
+            else:  # standard fields (e.g. address)
                 name = element.tagname
                 value = element.astext()
 
@@ -131,7 +134,7 @@ class HtmlReader(Reader):
     def read(self, filename):
         """Parse content and metadata of (x)HTML files"""
         content = open(filename)
-        metadata = {'title':'unnamed'}
+        metadata = {'title': 'unnamed'}
         for i in self._re.findall(content):
             key = i.split(':')[0][5:].strip()
             value = i.split(':')[-1][:-3].strip()
@@ -139,6 +142,7 @@ class HtmlReader(Reader):
             metadata[name] = _process_metadata(name, value)
 
         return content, metadata
+
 
 class AsciidocReader(Reader):
     """ Reader class to parse asciidoc files """
@@ -168,10 +172,10 @@ class AsciidocReader(Reader):
         asciidoc.options('--no-header-footer')
         asciidoc.execute(infile=content_buffer, outfile=outfile)
 
-
         return outfile.getvalue(), metadata
 
 _EXTENSIONS = dict((cls.extension, cls) for cls in Reader.__subclasses__())
+
 
 def read_file(filename, fmt=None, settings=None):
     """Return a reader object using the given format."""
