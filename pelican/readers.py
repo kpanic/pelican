@@ -162,7 +162,8 @@ class AsciidocReader(Reader):
             cur_meta = filter(lambda x: x, self._re.findall(line.strip()))
             if cur_meta:
                 (name, value) = cur_meta.pop()
-                metadata[name] = _process_metadata(name.strip(), value.strip())
+                metadata[name] = _process_metadata(name.strip().lower(),
+                        value.strip())
             else:
                 content += line
 
