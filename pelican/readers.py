@@ -149,12 +149,12 @@ class AsciidocReader(Reader):
     def read(self, filename):
         """ Parse content of an asciidoc file """
         outfile = StringIO.StringIO()
-        infile = StringIO.StringIO(open(filename).encode('utf8'))
+        input_file = StringIO.StringIO(open(filename).encode('utf8'))
 
         metadata = {'title': 'unamed'}
 
         content = ''
-        for line in infile.readlines():
+        for line in input_file.readlines():
             cur_meta = filter(lambda x: x, self._re.findall(line.strip()))
             if cur_meta:
                 (name, value) = cur_meta.pop()
@@ -162,11 +162,11 @@ class AsciidocReader(Reader):
             else:
                 content += line
 
-        infile = StringIO.StringIO(content)
+        content_buffer = StringIO.StringIO(content)
 
         asciidoc = AsciiDocAPI()
         asciidoc.options('--no-header-footer')
-        asciidoc.execute(infile=infile, outfile=outfile)
+        asciidoc.execute(infile=content_buffer, outfile=outfile)
 
 
         return outfile.getvalue(), metadata
